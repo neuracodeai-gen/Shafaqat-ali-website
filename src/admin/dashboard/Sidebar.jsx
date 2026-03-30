@@ -6,7 +6,9 @@ import {
   FolderOpen, 
   Settings, 
   LogOut,
-  User
+  User,
+  MessageSquare,
+  Star
 } from 'lucide-react';
 import { useAuth } from '../auth/authContext';
 
@@ -19,6 +21,8 @@ const Sidebar = () => {
     { icon: FileText, label: 'Blog Posts', path: '/admin/blog' },
     { icon: Megaphone, label: 'Updates / Announcements', path: '/admin/updates' },
     { icon: FolderOpen, label: 'Files & Media', path: '/admin/files' },
+    { icon: Star, label: 'Testimonials', path: '/admin/testimonials' },
+    { icon: MessageSquare, label: 'Messages', path: '/admin/messages' },
     { icon: Settings, label: 'Settings', path: '/admin/settings' },
   ];
 

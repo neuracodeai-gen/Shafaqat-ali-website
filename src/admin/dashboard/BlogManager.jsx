@@ -1,44 +1,47 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Plus, Search, Edit, Trash2, Eye, EyeOff, FileText } from 'lucide-react';
 import { getBlogPosts, deleteBlogPost, saveBlogPost } from '../../utils/storage';
 
 const BlogManager = () => {
-  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadPosts();
   }, []);
 
-  const loadPosts = () => {
-    const loadedPosts = getBlogPosts();
+  const loadPosts = async () => {
+    setLoading(true);
+    const loadedPosts = await getBlogPosts();
     setPosts(loadedPosts);
+    setLoading(false);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this post?')) {
-      deleteBlogPost(id);
+      await deleteBlogPost(id);
       loadPosts();
     }
   };
 
-  const handleTogglePublished = (post) => {
-    const updatedPost = { ...post, status: post.status === 'published' ? 'draft' : 'published' };
-    saveBlogPost(updatedPost);
+  const handleTogglePublished = async (post) => {
+    const updatedPost = { ...post, published: !post.published };
+    await saveBlogPost(updatedPost);
     loadPosts();
   };
 
   const filteredPosts = posts.filter((post) => {
     const matchesSearch = post.title?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filter === 'all' || post.status === filter;
+    const matchesFilter = filter === 'all' || (filter === 'published' && post.published) || (filter === 'draft' && !post.published);
     return matchesSearch && matchesFilter;
   });
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -95,7 +98,7 @@ const BlogManager = () => {
       </div>
 
       {/* Posts Table */}
-      {filteredPosts.length > 0 ? (
+      {!loading && filteredPosts.length > 0 ? (
         <div className="bg-white rounded-xl shadow-md overflow-hidden">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -117,9 +120,9 @@ const BlogManager = () => {
                 >
                   <td className="px-6 py-4">
                     <div className="font-medium text-primary">{post.title}</div>
-                    {post.excerpt && (
+                    {post.summary && (
                       <div className="text-sm text-gray-500 truncate max-w-xs">
-                        {post.excerpt}
+                        {post.summary}
                       </div>
                     )}
                   </td>
@@ -131,25 +134,25 @@ const BlogManager = () => {
                   <td className="px-6 py-4">
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-sm ${
-                        post.status === 'published'
+                        post.published
                           ? 'bg-green-100 text-green-700'
                           : 'bg-yellow-100 text-yellow-700'
                       }`}
                     >
-                      {post.status || 'Draft'}
+                      {post.published ? 'Published' : 'Draft'}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-gray-500">
-                    {post.createdAt ? formatDate(post.createdAt) : 'N/A'}
+                    {formatDate(post.created_at)}
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-2">
                       <button
                         onClick={() => handleTogglePublished(post)}
                         className="p-2 text-gray-500 hover:text-accent transition-colors"
-                        title={post.status === 'published' ? 'Unpublish' : 'Publish'}
+                        title={post.published ? 'Unpublish' : 'Publish'}
                       >
-                        {post.status === 'published' ? (
+                        {post.published ? (
                           <EyeOff className="w-4 h-4" />
                         ) : (
                           <Eye className="w-4 h-4" />
@@ -174,7 +177,7 @@ const BlogManager = () => {
             </tbody>
           </table>
         </div>
-      ) : (
+      ) : !loading ? (
         <div className="bg-white rounded-xl shadow-md p-12 text-center">
           <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-600 mb-2">No posts yet</h3>
@@ -187,7 +190,7 @@ const BlogManager = () => {
             New Post
           </Link>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

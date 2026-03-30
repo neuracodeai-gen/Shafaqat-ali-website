@@ -12,6 +12,8 @@ import BlogEditor from './admin/dashboard/BlogEditor';
 import UpdatesManager from './admin/dashboard/UpdatesManager';
 import UpdateEditor from './admin/dashboard/UpdateEditor';
 import FileManager from './admin/dashboard/FileManager';
+import TestimonialsManager from './admin/dashboard/TestimonialsManager';
+import MessagesManager from './admin/dashboard/MessagesManager';
 import Settings from './admin/dashboard/Settings';
 
 // Public Imports
@@ -21,6 +23,11 @@ import ClinicalPage from './pages/ClinicalPage';
 import EducationPage from './pages/EducationPage';
 import AIPage from './pages/AIPage';
 import BlogPage from './pages/BlogPage';
+import BlogPostPage from './pages/BlogPostPage';
+import TestimonialsPage from './pages/TestimonialsPage';
+import UpdatesPage from './pages/UpdatesPage';
+import GalleryPage from './pages/GalleryPage';
+import ChatPage from './pages/ChatPage';
 import ContactPage from './pages/ContactPage';
 
 function App() {
@@ -35,6 +42,11 @@ function App() {
           <Route path="/education" element={<EducationPage />} />
           <Route path="/ai" element={<AIPage />} />
           <Route path="/blog" element={<BlogPage />} />
+          <Route path="/blog/:id" element={<BlogPostPage />} />
+          <Route path="/testimonials" element={<TestimonialsPage />} />
+          <Route path="/updates" element={<UpdatesPage />} />
+          <Route path="/gallery" element={<GalleryPage />} />
+          <Route path="/chat/:sessionId?" element={<ChatPage />} />
           <Route path="/contact" element={<ContactPage />} />
 
           {/* Admin Auth Routes */}
@@ -51,6 +63,8 @@ function App() {
             <Route path="updates/new" element={<UpdateEditor />} />
             <Route path="updates/edit/:id" element={<UpdateEditor />} />
             <Route path="files" element={<FileManager />} />
+            <Route path="testimonials" element={<TestimonialsManager />} />
+            <Route path="messages" element={<MessagesManager />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 

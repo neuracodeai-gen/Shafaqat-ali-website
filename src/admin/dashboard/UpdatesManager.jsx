@@ -8,26 +8,29 @@ const UpdatesManager = () => {
   const [updates, setUpdates] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadUpdates();
   }, []);
 
-  const loadUpdates = () => {
-    const loadedUpdates = getUpdates();
+  const loadUpdates = async () => {
+    setLoading(true);
+    const loadedUpdates = await getUpdates();
     setUpdates(loadedUpdates);
+    setLoading(false);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this update?')) {
-      deleteUpdate(id);
+      await deleteUpdate(id);
       loadUpdates();
     }
   };
 
-  const handleTogglePin = (update) => {
+  const handleTogglePin = async (update) => {
     const updatedUpdate = { ...update, pinned: !update.pinned };
-    saveUpdate(updatedUpdate);
+    await saveUpdate(updatedUpdate);
     loadUpdates();
   };
 
@@ -38,6 +41,7 @@ const UpdatesManager = () => {
   });
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -101,7 +105,7 @@ const UpdatesManager = () => {
       </div>
 
       {/* Updates List */}
-      {filteredUpdates.length > 0 ? (
+      {!loading && filteredUpdates.length > 0 ? (
         <div className="grid gap-4">
           {filteredUpdates.map((update) => (
             <motion.div
@@ -131,7 +135,7 @@ const UpdatesManager = () => {
                   <div className="flex items-center gap-4 text-sm text-gray-500">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
-                      {update.date ? formatDate(update.date) : (update.createdAt ? formatDate(update.createdAt) : 'N/A')}
+                      {formatDate(update.created_at)}
                     </span>
                   </div>
                 </div>
@@ -165,7 +169,7 @@ const UpdatesManager = () => {
             </motion.div>
           ))}
         </div>
-      ) : (
+      ) : !loading ? (
         <div className="bg-white rounded-xl shadow-md p-12 text-center">
           <Megaphone className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-600 mb-2">No updates yet</h3>
@@ -178,7 +182,7 @@ const UpdatesManager = () => {
             New Update
           </Link>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

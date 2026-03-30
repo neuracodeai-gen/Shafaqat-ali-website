@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, Calendar, Users } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Calendar, Users, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/public/Navbar';
 import Footer from '../components/public/Footer';
+import { saveContactMessage, getOrCreateChatSession } from '../utils/storage';
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +16,9 @@ const ContactPage = () => {
   });
 
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [startChat, setStartChat] = useState(false);
+  const [chatSessionId, setChatSessionId] = useState(null);
 
   const subjects = [
     'General Inquiry',
@@ -33,11 +38,34 @@ const ContactPage = () => {
     'Other',
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // In production, this would send to a backend
-    console.log('Form submitted:', formData);
-    setSubmitted(true);
+    setLoading(true);
+    try {
+      await saveContactMessage(formData);
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Failed to send message. Please try again.');
+    }
+    setLoading(false);
+  };
+
+  const handleStartChat = async () => {
+    if (!formData.name || !formData.email) {
+      alert('Please enter your name and email to start a chat.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const session = await getOrCreateChatSession(formData.email, formData.name);
+      setChatSessionId(session.session_id);
+      setStartChat(true);
+    } catch (error) {
+      console.error('Error starting chat:', error);
+      alert('Failed to start chat. Please try again.');
+    }
+    setLoading(false);
   };
 
   return (
@@ -153,9 +181,33 @@ const ContactPage = () => {
                       <Send className="w-8 h-8 text-green-600" />
                     </div>
                     <h3 className="text-2xl font-bold text-primary mb-2">Message Sent!</h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 mb-6">
                       Thank you for reaching out. I'll get back to you soon.
                     </p>
+                    <button
+                      onClick={() => {
+                        setFormData({ name: '', email: '', role: '', subject: '', message: '' });
+                        setSubmitted(false);
+                      }}
+                      className="px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent-light"
+                    >
+                      Send Another Message
+                    </button>
+                  </div>
+                ) : startChat ? (
+                  <div className="text-center py-8">
+                    <MessageCircle className="w-16 h-16 text-accent mx-auto mb-4" />
+                    <h3 className="text-2xl font-bold text-primary mb-2">Chat Started!</h3>
+                    <p className="text-gray-600 mb-4">
+                      Your chat session has been created. You can now chat with Dr. Shafaqat Ali.
+                    </p>
+                    <Link
+                      to={`/chat/${chatSessionId}`}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent-light"
+                    >
+                      <MessageCircle className="w-5 h-5" />
+                      Open Chat
+                    </Link>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit}>
@@ -231,10 +283,30 @@ const ContactPage = () => {
                       
                       <button
                         type="submit"
-                        className="w-full py-3 bg-accent text-white rounded-lg hover:bg-accent-light transition-colors flex items-center justify-center gap-2"
+                        disabled={loading}
+                        className="w-full py-3 bg-accent text-white rounded-lg hover:bg-accent-light transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                       >
                         <Send className="w-5 h-5" />
-                        Send Message
+                        {loading ? 'Sending...' : 'Send Message'}
+                      </button>
+                      
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <div className="w-full border-t border-gray-200"></div>
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                          <span className="px-2 bg-white text-gray-500">Or</span>
+                        </div>
+                      </div>
+                      
+                      <button
+                        type="button"
+                        onClick={handleStartChat}
+                        disabled={loading}
+                        className="w-full py-3 border-2 border-accent text-accent rounded-lg hover:bg-accent hover:text-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                        {loading ? 'Starting...' : 'Start Live Chat'}
                       </button>
                     </div>
                   </form>

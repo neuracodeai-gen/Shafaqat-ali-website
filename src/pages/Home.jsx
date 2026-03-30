@@ -9,15 +9,24 @@ import { getUpdates, getSettings } from '../utils/storage';
 const Home = () => {
   const [updates, setUpdates] = useState([]);
   const [settings, setSettings] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadedUpdates = getUpdates();
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    const [loadedUpdates, loadedSettings] = await Promise.all([
+      getUpdates(),
+      getSettings()
+    ]);
+    
     const pinnedUpdates = loadedUpdates.filter(u => u.pinned).slice(0, 3);
     setUpdates(pinnedUpdates.length > 0 ? pinnedUpdates : getDefaultUpdates());
-    
-    const loadedSettings = getSettings();
     setSettings(loadedSettings);
-  }, []);
+    setLoading(false);
+  };
 
   const getDefaultUpdates = () => [
     {
@@ -225,7 +234,7 @@ const Home = () => {
             <div className="grid md:grid-cols-3 gap-6">
               {updates.map((update, index) => (
                 <motion.div
-                  key={update.id}
+                  key={update.id || index}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -243,7 +252,7 @@ const Home = () => {
                   </p>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500">
-                      {update.date ? new Date(update.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
+                      {update.created_at ? new Date(update.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent'}
                     </span>
                     <Link
                       to="/blog"

@@ -10,34 +10,52 @@ const UpdateEditor = () => {
   const [update, setUpdate] = useState({
     title: '',
     category: 'General',
-    date: new Date().toISOString().split('T')[0],
     body: '',
     pinned: false,
   });
 
-  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
 
   const categories = ['Workshop', 'Publication', 'Project', 'General'];
 
   useEffect(() => {
+    loadUpdate();
+  }, [id]);
+
+  const loadUpdate = async () => {
     if (id && id !== 'new') {
-      const updates = getUpdates();
+      const updates = await getUpdates();
       const existingUpdate = updates.find((u) => u.id === id);
       if (existingUpdate) {
         setUpdate(existingUpdate);
       }
     }
-  }, [id]);
-
-  const handleSave = () => {
-    setSaving(true);
-    saveUpdate({
-      ...update,
-      id: id && id !== 'new' ? id : undefined,
-    });
-    setSaving(false);
-    navigate('/admin/updates');
+    setInitialLoad(false);
   };
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      await saveUpdate({
+        ...update,
+        id: id && id !== 'new' ? id : undefined,
+      });
+      navigate('/admin/updates');
+    } catch (error) {
+      console.error('Error saving update:', error);
+      alert('Error saving update. Please try again.');
+    }
+    setLoading(false);
+  };
+
+  if (initialLoad) {
+    return (
+      <div className="p-8 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">
@@ -53,11 +71,11 @@ const UpdateEditor = () => {
 
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={loading}
           className="flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-light transition-colors disabled:opacity-50"
         >
           <Save className="w-4 h-4" />
-          {saving ? 'Saving...' : 'Save'}
+          {loading ? 'Saving...' : 'Save'}
         </button>
       </div>
 
@@ -92,16 +110,6 @@ const UpdateEditor = () => {
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-600 mb-1">Date</label>
-            <input
-              type="date"
-              value={update.date}
-              onChange={(e) => setUpdate({ ...update, date: e.target.value })}
-              className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-accent"
-            />
           </div>
 
           <div className="flex items-center gap-2">

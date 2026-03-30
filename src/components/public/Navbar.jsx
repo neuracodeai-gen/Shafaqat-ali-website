@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Stethoscope, GraduationCap, Cpu, BookOpen, MessageSquare, Phone } from 'lucide-react';
+import { Menu, X, Stethoscope, GraduationCap, Cpu, BookOpen, MessageSquare, Phone, Star, Calendar, Image } from 'lucide-react';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,6 +26,9 @@ const Navbar = () => {
     { path: '/clinical', label: 'Clinical Practice' },
     { path: '/education', label: 'Education & AI' },
     { path: '/ai', label: 'AI & Innovation' },
+    { path: '/updates', label: 'Updates', icon: Calendar },
+    { path: '/testimonials', label: 'Testimonials', icon: Star },
+    { path: '/gallery', label: 'Gallery', icon: Image },
     { path: '/blog', label: 'Blog' },
     { path: '/contact', label: 'Contact' },
   ];

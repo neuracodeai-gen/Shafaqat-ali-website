@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FileText, Megaphone, FolderOpen, Clock, Plus, ArrowRight } from 'lucide-react';
+import { FileText, Megaphone, FolderOpen, Clock, ArrowRight } from 'lucide-react';
 import { useAuth } from '../auth/authContext';
 import { getBlogPosts, getUpdates, getFiles, getActivities } from '../../utils/storage';
 
@@ -14,23 +14,35 @@ const DashboardOverview = () => {
     lastLogin: null,
   });
   const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load stats from storage
-    const posts = getBlogPosts();
-    const updates = getUpdates();
-    const files = getFiles();
-    const recentActivities = getActivities().slice(0, 5);
-
-    setStats({
-      totalPosts: posts.length,
-      totalUpdates: updates.length,
-      totalFiles: files.length,
-      lastLogin: user?.loginTime || null,
-    });
-
-    setActivities(recentActivities);
+    loadData();
   }, [user]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [posts, updates, files, recentActivities] = await Promise.all([
+        getBlogPosts(),
+        getUpdates(),
+        getFiles(),
+        getActivities(),
+      ]);
+
+      setStats({
+        totalPosts: posts.length,
+        totalUpdates: updates.length,
+        totalFiles: files.length,
+        lastLogin: user?.loginTime || null,
+      });
+
+      setActivities(recentActivities.slice(0, 5));
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    }
+    setLoading(false);
+  };
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -53,6 +65,14 @@ const DashboardOverview = () => {
       color: 'bg-orange-500' 
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="p-8 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">

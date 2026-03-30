@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Upload, Search, Trash2, Copy, Image, Video, FileText, 
-  X, Play, File, Check 
+  X, Play, File 
 } from 'lucide-react';
 import { getFiles, saveFile, deleteFile } from '../../utils/storage';
+import { supabase } from '../../lib/supabase';
 
 const FileManager = () => {
   const [files, setFiles] = useState([]);
@@ -13,6 +14,7 @@ const FileManager = () => {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedVideo, setSelectedVideo] = useState(null);
+  const [loading, setLoading] = useState(true);
   const fileInputRef = useRef(null);
   const dropZoneRef = useRef(null);
 
@@ -20,9 +22,21 @@ const FileManager = () => {
     loadFiles();
   }, []);
 
-  const loadFiles = () => {
-    const loadedFiles = getFiles();
-    setFiles(loadedFiles);
+  const loadFiles = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('files')
+        .select('*')
+        .order('uploaded_at', { ascending: false });
+      
+      if (error) throw error;
+      setFiles(data || []);
+    } catch (error) {
+      console.error('Error loading files:', error);
+      setFiles([]);
+    }
+    setLoading(false);
   };
 
   const getFileType = (file) => {
@@ -40,6 +54,7 @@ const FileManager = () => {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -51,37 +66,32 @@ const FileManager = () => {
     setUploading(true);
     setUploadProgress(0);
 
-    const newFiles = [];
     const total = uploadedFiles.length;
 
     for (let i = 0; i < uploadedFiles.length; i++) {
       const file = uploadedFiles[i];
       
-      // Convert to base64 for localStorage (in production, upload to cloud storage)
-      const reader = new FileReader();
-      
-      await new Promise((resolve) => {
-        reader.onload = () => {
-          const fileData = {
-            name: file.name,
-            type: file.type,
-            size: file.size,
-            data: reader.result, // base64
-            mimeType: file.type,
-          };
-          newFiles.push(fileData);
-          setUploadProgress(((i + 1) / total) * 100);
-          resolve();
-        };
-        reader.readAsDataURL(file);
-      });
+      const fileData = {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        url: file.name, 
+      };
+
+      try {
+        const { error } = await supabase
+          .from('files')
+          .insert(fileData);
+        
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error uploading file:', error);
+      }
+
+      setUploadProgress(((i + 1) / total) * 100);
     }
 
-    newFiles.forEach((fileData) => {
-      saveFile(fileData);
-    });
-
-    loadFiles();
+    await loadFiles();
     setUploading(false);
     setUploadProgress(0);
   };
@@ -98,17 +108,27 @@ const FileManager = () => {
     e.preventDefault();
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this file?')) {
-      deleteFile(id);
-      loadFiles();
+      try {
+        const { error } = await supabase
+          .from('files')
+          .delete()
+          .eq('id', id);
+        
+        if (error) throw error;
+        await loadFiles();
+      } catch (error) {
+        console.error('Error deleting file:', error);
+      }
     }
   };
 
   const handleCopyLink = (file) => {
-    navigator.clipboard.writeText(file.data);
-    // Show toast notification
-    alert('Link copied to clipboard!');
+    if (file.url) {
+      navigator.clipboard.writeText(file.url);
+      alert('Link copied to clipboard!');
+    }
   };
 
   const filteredFiles = files.filter((file) => {
@@ -221,7 +241,7 @@ const FileManager = () => {
       </div>
 
       {/* Files Grid */}
-      {filteredFiles.length > 0 ? (
+      {!loading && filteredFiles.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filteredFiles.map((file) => {
             const fileType = getFileType(file);
@@ -234,23 +254,20 @@ const FileManager = () => {
               >
                 {/* Preview */}
                 <div className="relative aspect-square bg-gray-100 flex items-center justify-center">
-                  {fileType === 'image' ? (
+                  {fileType === 'image' && file.url ? (
                     <img
-                      src={file.data}
+                      src={file.url}
                       alt={file.name}
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
                     />
-                  ) : fileType === 'video' ? (
-                    <button
-                      onClick={() => setSelectedVideo(file)}
-                      className="relative"
-                    >
-                      <Video className="w-16 h-16 text-gray-400" />
-                      <Play className="absolute inset-0 m-auto w-8 h-8 text-white" />
-                    </button>
-                  ) : (
+                  ) : null}
+                  <div className={fileType === 'image' && file.url ? 'hidden' : 'flex'}>
                     <FileIcon type={fileType} />
-                  )}
+                  </div>
                   
                   {/* Actions overlay */}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -276,54 +293,20 @@ const FileManager = () => {
                   <p className="text-sm font-medium text-primary truncate">{file.name}</p>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-xs text-gray-500">{formatFileSize(file.size)}</span>
-                    <span className="text-xs text-gray-400">{formatDate(file.uploadedAt)}</span>
+                    <span className="text-xs text-gray-400">{formatDate(file.uploaded_at)}</span>
                   </div>
                 </div>
               </motion.div>
             );
           })}
         </div>
-      ) : (
+      ) : !loading ? (
         <div className="bg-white rounded-xl shadow-md p-12 text-center">
           <File className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-600 mb-2">No files uploaded yet</h3>
           <p className="text-gray-500">Upload your first file to get started.</p>
         </div>
-      )}
-
-      {/* Video Player Modal */}
-      <AnimatePresence>
-        {selectedVideo && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-            onClick={() => setSelectedVideo(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="relative max-w-4xl w-full"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={() => setSelectedVideo(null)}
-                className="absolute -top-10 right-0 text-white hover:text-gray-300"
-              >
-                <X className="w-8 h-8" />
-              </button>
-              <video
-                src={selectedVideo.data}
-                controls
-                className="w-full rounded-lg"
-                autoPlay
-              />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      ) : null}
     </div>
   );
 };

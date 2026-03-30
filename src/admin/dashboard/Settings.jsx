@@ -15,28 +15,48 @@ const Settings = () => {
 
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadedSettings = getSettings();
-    setSettings(loadedSettings);
+    loadSettings();
   }, []);
 
-  const handleSave = () => {
+  const loadSettings = async () => {
+    setLoading(true);
+    const loadedSettings = await getSettings();
+    setSettings({
+      displayName: loadedSettings.display_name || '',
+      email: loadedSettings.email || '',
+      tagline: loadedSettings.tagline || '',
+      contactEmail: loadedSettings.contact_email || '',
+      showBlog: loadedSettings.show_blog ?? true,
+      showTestimonials: loadedSettings.show_testimonials ?? true,
+    });
+    setLoading(false);
+  };
+
+  const handleSave = async () => {
     setSaving(true);
-    saveSettings(settings);
+    await saveSettings({
+      display_name: settings.displayName,
+      email: settings.email,
+      tagline: settings.tagline,
+      contact_email: settings.contactEmail,
+      show_blog: settings.showBlog,
+      show_testimonials: settings.showTestimonials,
+    });
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
 
-  const getInitials = (name) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  if (loading) {
+    return (
+      <div className="p-8 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8">

@@ -10,48 +10,55 @@ const BlogPage = () => {
   const [posts, setPosts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadedPosts = getBlogPosts();
-    const publishedPosts = loadedPosts.filter(p => p.status === 'published');
-    setPosts(publishedPosts.length > 0 ? publishedPosts : getDefaultPosts());
+    loadPosts();
   }, []);
+
+  const loadPosts = async () => {
+    setLoading(true);
+    const loadedPosts = await getBlogPosts();
+    const publishedPosts = loadedPosts.filter(p => p.published);
+    setPosts(publishedPosts.length > 0 ? publishedPosts : getDefaultPosts());
+    setLoading(false);
+  };
 
   const getDefaultPosts = () => [
     {
       id: '1',
       title: 'The Future of AI in Surgical Practice',
       category: 'AI',
-      excerpt: 'Exploring how artificial intelligence is transforming surgical decision-making and patient outcomes.',
+      summary: 'Exploring how artificial intelligence is transforming surgical decision-making and patient outcomes.',
       body: 'Artificial intelligence is revolutionizing surgical practice...',
-      createdAt: '2024-03-15',
+      created_at: '2024-03-15',
       tags: 'ai, surgery, innovation',
     },
     {
       id: '2',
       title: 'Advances in Laparoscopic Surgery',
       category: 'Surgery',
-      excerpt: 'New techniques and technologies in minimally invasive surgery are improving patient recovery times.',
+      summary: 'New techniques and technologies in minimally invasive surgery are improving patient recovery times.',
       body: 'Laparoscopic surgery has come a long way...',
-      createdAt: '2024-02-28',
+      created_at: '2024-02-28',
       tags: 'laparoscopy, surgery, minimally invasive',
     },
     {
       id: '3',
       title: 'Medical Education in the Digital Age',
       category: 'Medical Education',
-      excerpt: 'How technology is reshaping how we teach and train the next generation of surgeons.',
+      summary: 'How technology is reshaping how we teach and train the next generation of surgeons.',
       body: 'Digital transformation in medical education...',
-      createdAt: '2024-01-15',
+      created_at: '2024-01-15',
       tags: 'education, digital, training',
     },
     {
       id: '4',
       title: 'Reflections on 15 Years of Surgical Practice',
       category: 'Reflections',
-      excerpt: 'Lessons learned and insights gained from over a decade in surgical practice.',
+      summary: 'Lessons learned and insights gained from over a decade in surgical practice.',
       body: 'Looking back at my journey in surgery...',
-      createdAt: '2023-12-10',
+      created_at: '2023-12-10',
       tags: 'reflections, career, surgery',
     },
   ];
@@ -60,12 +67,13 @@ const BlogPage = () => {
 
   const filteredPosts = posts.filter((post) => {
     const matchesSearch = post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         post.excerpt?.toLowerCase().includes(searchTerm.toLowerCase());
+                         post.summary?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filter === 'all' || post.category === filter;
     return matchesSearch && matchesFilter;
   });
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'Recent';
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
@@ -129,7 +137,7 @@ const BlogPage = () => {
           </div>
 
           {/* Posts Grid */}
-          {filteredPosts.length > 0 ? (
+          {!loading && filteredPosts.length > 0 ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredPosts.map((post, index) => (
                 <motion.article
@@ -147,7 +155,7 @@ const BlogPage = () => {
                       </span>
                       <span className="flex items-center gap-1 text-sm text-gray-500">
                         <Calendar className="w-4 h-4" />
-                        {post.createdAt ? formatDate(post.createdAt) : 'Recent'}
+                        {formatDate(post.created_at)}
                       </span>
                     </div>
                     
@@ -156,11 +164,11 @@ const BlogPage = () => {
                     </h2>
                     
                     <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                      {post.excerpt}
+                      {post.summary}
                     </p>
                     
                     <Link
-                      to={`/blog`}
+                      to={`/blog/${post.id}`}
                       className="inline-flex items-center gap-2 text-accent hover:text-accent-light font-medium"
                     >
                       Read More <ArrowRight className="w-4 h-4" />
@@ -169,11 +177,11 @@ const BlogPage = () => {
                 </motion.article>
               ))}
             </div>
-          ) : (
+          ) : !loading ? (
             <div className="text-center py-16">
               <p className="text-gray-500 text-lg">No posts found matching your criteria.</p>
             </div>
-          )}
+          ) : null}
         </div>
       </section>
 

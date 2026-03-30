@@ -125,12 +125,8 @@ const Home = () => {
               className="flex justify-center"
             >
               <div className="relative">
-                <div className="w-72 h-72 md:w-96 md:h-96 rounded-full bg-accent/20 flex items-center justify-center">
-                  <div className="w-64 h-64 md:w-80 md:h-80 rounded-full bg-accent/40 flex items-center justify-center">
-                    <div className="w-56 h-56 md:w-72 md:h-72 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                      <span className="text-6xl md:text-8xl font-display font-bold text-white">SA</span>
-                    </div>
-                  </div>
+                <div className="w-72 h-72 md:w-96 md:h-96 rounded-full bg-accent/20 flex items-center justify-center overflow-hidden">
+                  <img src="/shafaqat.png" alt="Dr. Shafaqat Ali" className="w-full h-full object-cover rounded-full" />
                 </div>
                 
                 {/* Floating badges */}

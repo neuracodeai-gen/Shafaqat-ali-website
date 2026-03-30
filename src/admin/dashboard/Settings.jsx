@@ -59,9 +59,7 @@ const Settings = () => {
           </h2>
 
           <div className="flex items-start gap-6 mb-6">
-            <div className="w-20 h-20 rounded-full bg-accent flex items-center justify-center text-white text-2xl font-bold">
-              {getInitials(settings.displayName || 'SA')}
-            </div>
+            <img src="/shafaqat.png" alt="Dr. Shafaqat Ali" className="w-20 h-20 rounded-full object-cover" />
             <div className="flex-1">
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-600 mb-1">Display Name</label>

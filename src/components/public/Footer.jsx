@@ -9,11 +9,9 @@ const Footer = () => {
       <div className="container-custom py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* About */}
-          <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-white font-bold text-lg">
-                SA
-              </div>
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <img src="/shafaqat.png" alt="Dr. Shafaqat Ali" className="w-12 h-12 rounded-full object-cover" />
               <div>
                 <span className="font-display font-bold text-xl">Dr. Shafaqat Ali</span>
                 <p className="text-xs text-gray-400">Consultant General Surgeon</p>

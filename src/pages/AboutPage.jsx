@@ -56,10 +56,8 @@ const AboutPage = () => {
               viewport={{ once: true }}
               className="relative"
             >
-              <div className="aspect-[4/5] rounded-2xl bg-gradient-to-br from-accent/20 to-gold/20 flex items-center justify-center">
-                <div className="w-64 h-64 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center">
-                  <span className="text-8xl font-display font-bold text-white">SA</span>
-                </div>
+              <div className="aspect-[4/5] rounded-2xl bg-gradient-to-br from-accent/20 to-gold/20 flex items-center justify-center overflow-hidden">
+                <img src="/shafaqat.png" alt="Dr. Shafaqat Ali" className="w-full h-full object-cover" />
               </div>
               
               {/* Decorative elements */}

@@ -42,9 +42,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-bold">
-              SA
-            </div>
+            <img src="/shafaqat.png" alt="Dr. Shafaqat Ali" className="w-10 h-10 rounded-full object-cover" />
             <div>
               <span className={`font-display font-bold text-lg ${scrolled ? 'text-primary' : 'text-white'}`}>
                 Dr. Shafaqat Ali

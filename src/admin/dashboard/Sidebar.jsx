@@ -41,9 +41,7 @@ const Sidebar = () => {
       {/* Logo/Avatar */}
       <div className="p-6 border-b border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-white font-bold">
-            {user ? getInitials(user.user) : 'SA'}
-          </div>
+          <img src="/shafaqat.png" alt="Dr. Shafaqat Ali" className="w-12 h-12 rounded-full object-cover" />
           <div>
             <h2 className="font-display font-bold text-lg">Admin Panel</h2>
             <p className="text-xs text-gray-400">Dr. Shafaqat Ali</p>

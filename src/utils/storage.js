@@ -1,4 +1,4 @@
-import { supahbase } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 
 const useSupabase = false;
 

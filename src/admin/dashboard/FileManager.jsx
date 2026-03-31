@@ -5,7 +5,6 @@ import {
   X, Play, File 
 } from 'lucide-react';
 import { getFiles, saveFile, deleteFile } from '../../utils/storage';
-import { supabase } from '../../lib/supabase';
 
 const FileManager = () => {
   const [files, setFiles] = useState([]);
@@ -25,12 +24,7 @@ const FileManager = () => {
   const loadFiles = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('files')
-        .select('*')
-        .order('uploaded_at', { ascending: false });
-      
-      if (error) throw error;
+      const data = await getFiles();
       setFiles(data || []);
     } catch (error) {
       console.error('Error loading files:', error);
@@ -71,19 +65,18 @@ const FileManager = () => {
     for (let i = 0; i < uploadedFiles.length; i++) {
       const file = uploadedFiles[i];
       
-      const fileData = {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        url: file.name, 
-      };
-
       try {
-        const { error } = await supabase
-          .from('files')
-          .insert(fileData);
+        const base64 = await fileToBase64(file);
         
-        if (error) throw error;
+        const fileData = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          url: base64,
+          preview_url: base64,
+        };
+
+        await saveFile(fileData);
       } catch (error) {
         console.error('Error uploading file:', error);
       }
@@ -94,6 +87,15 @@ const FileManager = () => {
     await loadFiles();
     setUploading(false);
     setUploadProgress(0);
+  };
+
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = (error) => reject(error);
+    });
   };
 
   const handleDrop = (e) => {
@@ -111,12 +113,7 @@ const FileManager = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this file?')) {
       try {
-        const { error } = await supabase
-          .from('files')
-          .delete()
-          .eq('id', id);
-        
-        if (error) throw error;
+        await deleteFile(id);
         await loadFiles();
       } catch (error) {
         console.error('Error deleting file:', error);
@@ -152,8 +149,7 @@ const FileManager = () => {
   };
 
   return (
-    <div className="p-8">
-      {/* Header */}
+    <div className="p-8 min-h-screen bg-background">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl font-display font-bold text-primary">Files & Media</h1>
@@ -161,7 +157,6 @@ const FileManager = () => {
         </div>
       </div>
 
-      {/* Upload Area */}
       <div
         ref={dropZoneRef}
         onDrop={handleDrop}
@@ -210,7 +205,6 @@ const FileManager = () => {
         )}
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -240,7 +234,6 @@ const FileManager = () => {
         </div>
       </div>
 
-      {/* Files Grid */}
       {!loading && filteredFiles.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filteredFiles.map((file) => {
@@ -252,11 +245,10 @@ const FileManager = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 className="bg-white rounded-xl shadow-md overflow-hidden group"
               >
-                {/* Preview */}
                 <div className="relative aspect-square bg-gray-100 flex items-center justify-center">
-                  {fileType === 'image' && file.url ? (
+                  {fileType === 'image' && (file.preview_url || file.url) ? (
                     <img
-                      src={file.url}
+                      src={file.preview_url || file.url}
                       alt={file.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -265,11 +257,10 @@ const FileManager = () => {
                       }}
                     />
                   ) : null}
-                  <div className={fileType === 'image' && file.url ? 'hidden' : 'flex'}>
+                  <div className={fileType === 'image' && (file.preview_url || file.url) ? 'hidden' : 'flex'}>
                     <FileIcon type={fileType} />
                   </div>
                   
-                  {/* Actions overlay */}
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                     <button
                       onClick={() => handleCopyLink(file)}
@@ -288,7 +279,6 @@ const FileManager = () => {
                   </div>
                 </div>
 
-                {/* Info */}
                 <div className="p-3">
                   <p className="text-sm font-medium text-primary truncate">{file.name}</p>
                   <div className="flex items-center justify-between mt-1">
@@ -306,7 +296,11 @@ const FileManager = () => {
           <h3 className="text-xl font-semibold text-gray-600 mb-2">No files uploaded yet</h3>
           <p className="text-gray-500">Upload your first file to get started.</p>
         </div>
-      ) : null}
+      ) : (
+        <div className="flex items-center justify-center p-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,30 +1,49 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Image } from 'lucide-react';
+import { Image, Video, FileText, File, Download } from 'lucide-react';
 import Navbar from '../components/public/Navbar';
 import Footer from '../components/public/Footer';
-import { getGallery } from '../utils/storage';
+import { getFiles } from '../utils/storage';
 
 const GalleryPage = () => {
-  const [gallery, setGallery] = useState([]);
+  const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
   const [filter, setFilter] = useState('all');
 
   useEffect(() => {
-    loadGallery();
+    loadFiles();
   }, []);
 
-  const loadGallery = async () => {
+  const loadFiles = async () => {
     setLoading(true);
-    const data = await getGallery();
-    setGallery(data);
+    const data = await getFiles();
+    setFiles(data);
     setLoading(false);
   };
 
-  const filteredGallery = gallery.filter(g => filter === 'all' || g.category === filter);
+  const getFileType = (file) => {
+    if (file.type?.startsWith('image/')) return 'image';
+    if (file.type?.startsWith('video/')) return 'video';
+    if (file.type?.includes('pdf') || file.type?.includes('document') || file.type?.includes('word')) return 'document';
+    return 'other';
+  };
 
-  const categories = ['all', 'Events', 'Ceremonies', 'Conferences', 'Other'];
+  const FileIcon = ({ type }) => {
+    switch (type) {
+      case 'image': return <Image className="w-12 h-12 text-purple-500" />;
+      case 'video': return <Video className="w-12 h-12 text-red-500" />;
+      case 'document': return <FileText className="w-12 h-12 text-blue-500" />;
+      default: return <File className="w-12 h-12 text-gray-500" />;
+    }
+  };
+
+  const filteredFiles = files.filter(f => {
+    const fileType = getFileType(f);
+    return filter === 'all' || fileType === filter;
+  });
+
+  const categories = ['all', 'image', 'video', 'document'];
 
   return (
     <div className="min-h-screen">
@@ -38,10 +57,10 @@ const GalleryPage = () => {
             className="max-w-3xl"
           >
             <h1 className="text-4xl md:text-5xl font-display font-bold text-white mb-6">
-              Gallery
+              Files & Resources
             </h1>
             <p className="text-xl text-gray-300">
-              Moments and memories captured over the years
+              Educational materials, documents, and media files
             </p>
           </motion.div>
         </div>

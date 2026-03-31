@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Send, User, Bot, ArrowLeft } from 'lucide-react';
+import { Send, User, Bot, ArrowLeft, Star, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/public/Navbar';
 import Footer from '../components/public/Footer';
@@ -9,7 +9,8 @@ import {
   getChatMessages, 
   sendChatMessage, 
   markChatMessagesRead, 
-  getOrCreateChatSession 
+  getOrCreateChatSession,
+  saveTestimonial
 } from '../utils/storage';
 
 const ChatPage = () => {
@@ -18,6 +19,9 @@ const ChatPage = () => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [review, setReview] = useState({ name: '', quote: '', rating: 5, role: '' });
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const lastMessageCountRef = useRef(0);
@@ -53,9 +57,7 @@ const ChatPage = () => {
           }
           scrollToBottom();
         }
-      } catch (e) {
-        // Silent fail on polling
-      }
+      } catch (e) {}
     }, 2000);
     
     return () => clearInterval(interval);
@@ -108,6 +110,27 @@ const ChatPage = () => {
       console.error('Error sending message:', error);
     }
     setSending(false);
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    try {
+      await saveTestimonial({
+        name: review.name || userName || 'Anonymous',
+        quote: review.quote,
+        rating: review.rating,
+        role: review.role,
+        approved: false,
+      });
+      setReviewSubmitted(true);
+      setTimeout(() => {
+        setShowReviewModal(false);
+        setReviewSubmitted(false);
+        setReview({ name: '', quote: '', rating: 5, role: '' });
+      }, 2000);
+    } catch (error) {
+      console.error('Error submitting review:', error);
+    }
   };
 
   const formatTime = (dateString) => {
@@ -232,8 +255,98 @@ const ChatPage = () => {
               </div>
             </form>
           </div>
+          
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => setShowReviewModal(true)}
+              className="text-accent hover:text-accent-light text-sm underline"
+            >
+              Leave a Review
+            </button>
+          </div>
         </div>
       </section>
+
+      {showReviewModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-xl p-6 w-full max-w-md"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold text-primary">Leave a Review</h2>
+              <button onClick={() => setShowReviewModal(false)} className="text-gray-500 hover:text-gray-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            {reviewSubmitted ? (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                  <Star className="w-8 h-8 text-green-600" />
+                </div>
+                <p className="text-green-600 font-semibold">Thank you for your review!</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmitReview} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Your Name</label>
+                  <input
+                    type="text"
+                    value={review.name}
+                    onChange={(e) => setReview({ ...review, name: e.target.value })}
+                    placeholder={userName || 'Your name'}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Your Review *</label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={review.quote}
+                    onChange={(e) => setReview({ ...review, quote: e.target.value })}
+                    placeholder="Share your experience..."
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-accent resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Rating</label>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReview({ ...review, rating: star })}
+                        className="p-1"
+                      >
+                        <Star className={`w-6 h-6 ${star <= review.rating ? 'text-gold fill-gold' : 'text-gray-300'}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Role (optional)</label>
+                  <input
+                    type="text"
+                    value={review.role}
+                    onChange={(e) => setReview({ ...review, role: e.target.value })}
+                    placeholder="e.g., Patient, Colleague"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:border-accent"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-accent text-white rounded-lg hover:bg-accent-light"
+                >
+                  Submit Review
+                </button>
+              </form>
+            )}
+          </motion.div>
+        </div>
+      )}
 
       <Footer />
     </div>

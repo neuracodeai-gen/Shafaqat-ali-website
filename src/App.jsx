@@ -21,7 +21,6 @@ import Home from './pages/Home';
 import AboutPage from './pages/AboutPage';
 import ClinicalPage from './pages/ClinicalPage';
 import EducationPage from './pages/EducationPage';
-import AIPage from './pages/AIPage';
 import BlogPage from './pages/BlogPage';
 import BlogPostPage from './pages/BlogPostPage';
 import TestimonialsPage from './pages/TestimonialsPage';
@@ -40,12 +39,11 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/clinical" element={<ClinicalPage />} />
           <Route path="/education" element={<EducationPage />} />
-          <Route path="/ai" element={<AIPage />} />
           <Route path="/blog" element={<BlogPage />} />
           <Route path="/blog/:id" element={<BlogPostPage />} />
-          <Route path="/testimonials" element={<TestimonialsPage />} />
+          <Route path="/reviews" element={<TestimonialsPage />} />
           <Route path="/updates" element={<UpdatesPage />} />
-          <Route path="/gallery" element={<GalleryPage />} />
+          <Route path="/files" element={<GalleryPage />} />
           <Route path="/chat/:sessionId?" element={<ChatPage />} />
           <Route path="/contact" element={<ContactPage />} />
 

@@ -38,7 +38,7 @@ const TestimonialsPage = () => {
             className="max-w-3xl"
           >
             <h1 className="text-4xl md:text-5xl font-display font-bold text-white mb-6">
-              Testimonials
+              Reviews
             </h1>
             <p className="text-xl text-gray-300">
               What people say about working with me
